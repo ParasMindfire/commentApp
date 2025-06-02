@@ -12,9 +12,9 @@ app.use(cors());
 
 app.use(express.json());
 
-app.use(errorHandler);
-
 app.use('/',router);
+
+app.use(errorHandler);
 
 app.listen('5000',()=>{
     console.log("app is listening to port 5000");

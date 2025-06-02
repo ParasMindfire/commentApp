@@ -1,31 +1,12 @@
-import { useEffect, useState } from 'react'
-import './App.css'
-import {listAllComments} from "./services/index"
+import CommentPage from './pages/commentPage';
+import './assets/styles.css'; // Import global styles
 
 function App() {
-  const [comments, setComments] = useState([]);
-
-
-  useEffect(()=>{
-    fetchComments();
-    // setComments[commentz]
-  },[])
-
-  const fetchComments=async()=>{
-    const result=await listAllComments();
-    console.log("comments ",result.comments);
-    setComments(result.body);
-    return result;
-  }
-
   return (
-    <>
-      <h1>Hellooo</h1>
-      {comments.map((comment)=>{
-        return {}
-      })}
-    </>
-  )
+    <div className="app-container">
+      <CommentPage />
+    </div>
+  );
 }
 
-export default App
+export default App;

@@ -1,0 +1,157 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.app-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1,
+h2 {
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+/* Comment Form */
+.comment-form textarea {
+  width: calc(100% - 22px); /* Account for padding and border */
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1em;
+  min-height: 60px;
+  resize: vertical;
+}
+
+.comment-form button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+.comment-form button:hover {
+  background-color: #0056b3;
+}
+.comment-form button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Comment List & Item */
+.comment-list {
+  margin-top: 20px;
+}
+
+.comment-item {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+.comment-item.deleted-comment {
+  background-color: #f0f0f0;
+  color: #888;
+}
+
+.comment-item.deleted-comment .comment-text {
+  font-style: italic;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.comment-author {
+  font-weight: bold;
+}
+
+.comment-timestamp {
+  color: #777;
+  font-size: 0.8em;
+}
+
+.comment-text {
+  margin-bottom: 10px;
+  line-height: 1.6;
+  white-space: pre-wrap; /* Preserve line breaks */
+}
+
+.comment-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
+  font-size: 0.9em;
+  color: #007bff;
+}
+.comment-actions button:hover {
+  text-decoration: underline;
+}
+.comment-actions button.delete-button {
+  color: #dc3545;
+}
+.comment-actions span {
+  margin: 0 5px;
+}
+
+/* Nested Comments Indentation */
+.comment-replies {
+  margin-left: 30px; /* Indent replies */
+  padding-left: 15px;
+  border-left: 2px solid #ddd;
+  margin-top: 15px;
+}
+
+/* Reply Form within a comment */
+.reply-form-container {
+  margin-top: 15px;
+  padding-left: 10px; /* Slight indent for reply form */
+}
+
+.error-message {
+  color: red;
+  font-size: 0.9em;
+  margin-top: 5px;
+}
+
+/* Depth specific styling (optional) */
+.depth-0 {
+  /* Top level comments */
+}
+.depth-1 {
+  /* First level replies */
+}
+.depth-2 {
+  /* Second level replies */
+}
+.depth-3 {
+  /* Third level replies - no reply button shown past this */
+}
+
+hr {
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid #eee;
+}

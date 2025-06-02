@@ -50,7 +50,7 @@ export const updateCommentService=async(res:Response,vote_count:number,comment_i
 
 
 export const deleteCommentService=async(res:Response,comment_id:number)=>{
-
+    try {
         if(!comment_id){
             res.json({
                 status:400,
@@ -59,5 +59,7 @@ export const deleteCommentService=async(res:Response,comment_id:number)=>{
         }
 
         await deleteCommentRepo(comment_id);
-
+    } catch (error) {
+        
+    }
 }
