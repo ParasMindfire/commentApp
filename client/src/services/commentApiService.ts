@@ -12,7 +12,7 @@ interface ApiResponse<T = any> {
 
 // Helper to generate uniqueish IDs for new comments client-side
 // In a real app, backend should generate IDs.
-
+const generateTempId = () => Date.now();
 
 
 export const fetchComments = async (postId: number): Promise<IComment[]> => {
@@ -86,3 +86,5 @@ export const deleteCommentApi = async (comment_id: number): Promise<ApiResponse>
     throw error;
   }
 };
+
+export { generateTempId };

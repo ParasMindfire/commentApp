@@ -84,86 +84,116 @@ export const useCommentStore = create<CommentStoreState>((set, get) => ({
     }
   },
 
-  postComment: async (payload: CreateCommentPayload, currentComments: ICommentFE[]) => {
+    postComment: async (payload: CreateCommentPayload, currentComments: ICommentFE[]) => {
     set({ loading: true, error: null });
     const { parent_comment_id, user_id, post_id, text } = payload;
     
     let parentComment: ICommentFE | undefined | null = null;
-    let newReplyCount = 0;
+    let newReplyCount = 0; // This is the depth of the new comment
 
     if (parent_comment_id) {
         const findResult = findCommentAndParent(currentComments, parent_comment_id);
         parentComment = findResult.comment;
         if (parentComment) {
-            newReplyCount = parentComment.reply_count + 1;
+            // Explicitly convert parentComment.reply_count to a number before adding
+            const parentDepth = Number(parentComment.reply_count);
+            if (isNaN(parentDepth)) {
+                console.error(
+                    `Error: parentComment.reply_count ('${parentComment.reply_count}') is not a valid number for comment ID ${parentComment.comment_id}. Defaulting depth calculation.`
+                );
+                // Fallback: if parent depth is invalid, treat new reply as if parent was depth 0.
+                // Or, you might want to throw an error or prevent the reply.
+                newReplyCount = 1; // Assumes parent was depth 0 + 1
+            } else {
+                newReplyCount = parentDepth + 1;
+            }
+        } else {
+            // Parent comment not found in current client state, should ideally not happen if UI is consistent
+            console.error(`Error: Parent comment with ID ${parent_comment_id} not found in client state.`);
+            // Fallback or throw error. For now, let's assume it implies a top-level comment if parent is not found (incorrect logic but a fallback).
+            // A better approach would be to prevent the reply or show an error.
+            // For now, setting reply_count as if it's a top-level (depth 0) reply (which is inconsistent).
+            // This branch ideally shouldn't be hit if parent_comment_id is valid and UI is synced.
+            // If parent_comment_id is valid but not found, it implies a data inconsistency or a bug.
+            // Perhaps default to an error state.
+            set({ error: `Parent comment ${parent_comment_id} not found for reply.`, loading: false });
+            return;
         }
-    }
+    } // else, it's a top-level comment, newReplyCount remains 0 (depth 0)
 
     if (parent_comment_id && newReplyCount > 3) {
         set({ error: "Cannot reply more than 3 levels deep.", loading: false });
-        // alert("Cannot reply more than 3 levels deep.");
         return;
     }
 
-    const newCommentId = Math.floor(Math.random() * 1000000) + 1; // Client-generated ID (ideally from backend)
+    const newCommentId = Math.floor(Math.random() * 1000000) + 1;
 
     const backendPayload: BackendCreateCommentPayload = {
-        comment_id: newCommentId, // ID for the new comment
+        comment_id: newCommentId,
         user_id,
         post_id,
         text,
         is_reply: !!parent_comment_id,
-        reply_count: newReplyCount,
+        reply_count: newReplyCount, // This should now be a clean integer
         vote_count: 0,
+        // parent_comment_id: parent_comment_id || undefined, // Send actual parent_id
     };
 
-    try {
-      // Optimistic update
-      const newCommentFE: ICommentFE = {
-        ...backendPayload, // this has comment_id, user_id, post_id, text, is_reply, reply_count, vote_count
-        parent_id: parent_comment_id,
-        authorName: `User ${user_id}`, // Mock
-        createdAt: new Date().toISOString(),
-        children: [],
-        is_deleted: false,
+    // Optimistic update object
+    const newCommentFE: ICommentFE = {
+      comment_id: newCommentId,
+      user_id,
+      post_id,
+      text,
+      is_reply: !!parent_comment_id,
+      reply_count: newReplyCount, // Use the calculated, clean depth
+      vote_count: 0,
+      parent_id: parent_comment_id,
+      authorName: `User ${user_id}`,
+      createdAt: new Date().toISOString(),
+      children: [],
+      is_deleted: false,
+    };
+
+    // Add to children of parent (optimistic update)
+    let updatedComments;
+    if (parent_comment_id && parentComment) { // Ensure parentComment exists for adding as child
+      const addReplyToTree = (nodes: ICommentFE[], newReply: ICommentFE): ICommentFE[] => {
+          return nodes.map(node => {
+              if (node.comment_id === parent_comment_id) {
+                  return { ...node, children: [...node.children, newReply] };
+              }
+              if (node.children && node.children.length > 0) {
+                  return { ...node, children: addReplyToTree(node.children, newReply) };
+              }
+              return node;
+          });
       };
+      updatedComments = addReplyToTree(get().comments, newCommentFE);
+    } else if (!parent_comment_id) { // It's a new top-level comment
+      updatedComments = [...get().comments, newCommentFE];
+    } else {
+      // This case (parent_comment_id exists but parentComment is null/undefined)
+      // was handled above by returning early with an error.
+      // If it somehow reaches here, it means an issue in logic.
+      // To be safe, don't modify comments if state is inconsistent.
+      console.error("Inconsistent state for optimistic update of reply.");
+      updatedComments = get().comments; // No change
+    }
+    set({ comments: updatedComments, activeReplyToId: null });
 
-      let updatedComments;
-      if (parent_comment_id && parentComment) {
-        // Add to children of parent
-        const addReplyToTree = (nodes: ICommentFE[]): ICommentFE[] => {
-            return nodes.map(node => {
-                if (node.comment_id === parent_comment_id) {
-                    return { ...node, children: [...node.children, newCommentFE] };
-                }
-                if (node.children && node.children.length > 0) {
-                    return { ...node, children: addReplyToTree(node.children) };
-                }
-                return node;
-            });
-        };
-        updatedComments = addReplyToTree(get().comments);
-      } else {
-        // Add as top-level comment
-        updatedComments = [...get().comments, newCommentFE];
-      }
-      set({ comments: updatedComments, activeReplyToId: null }); // Clear reply form
-
+    try {
       await addComment(backendPayload);
-      // Backend doesn't return the created comment with its final ID (if DB generated).
-      // For a robust solution, the backend should return the created entity.
-      // Then we would update the optimistic comment with the real ID.
-      // For now, we might need to reload all comments to get DB-generated IDs and timestamps.
-      // Or, trust the client-generated ID if the backend uses the one provided.
-      // await get().loadComments(post_id); // Re-fetch to get actual data (optional, but safer)
       set({loading: false});
-
     } catch (err: any) {
       set({ error: err.message || 'Failed to post comment.', loading: false });
-      // Revert optimistic update if needed, or simply show error
+      // Revert optimistic update (logic for this needs to be robust)
+      // For simplicity, could just reload all comments on error:
+      // await get().loadComments(post_id);
       console.error(err);
     }
   },
+
 
   voteComment: async (commentId: number, voteType: 'up' | 'down') => {
     const { comment } = findCommentAndParent(get().comments, commentId);
