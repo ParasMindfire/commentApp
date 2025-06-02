@@ -1,0 +1,31 @@
+services:
+  comment_frontend:
+    restart: always
+    image: node:18-alpine
+    container_name: comment_frontend
+    ports:
+      - 3000
+    healthcheck:
+      test: "exit 0"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    networks:
+      - comment
+
+  comment_backend:
+    restart: always
+    image: node:18
+    container_name: comment_backend
+    ports:
+      - 9000
+    healthcheck:
+      test: "exit 0"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    networks:
+      - comment
+
+networks:
+  assessify:
+    driver: bridge
+    name: comment
