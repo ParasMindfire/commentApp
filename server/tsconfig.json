@@ -1,0 +1,17 @@
+// tsconfig.json
+{
+  "compilerOptions": {
+    "module": "commonjs", // Changed from ESNext
+    "target": "ES2020", // A good modern target
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "outDir": "./dist", // Added: Output directory for compiled JS
+    "rootDir": "./src", // Added: Root directory of source files
+    "sourceMap": true // Optional: Good for debugging
+  },
+  "include": ["src/**/*"], // Compile only files in src
+  "exclude": ["node_modules"]
+}
